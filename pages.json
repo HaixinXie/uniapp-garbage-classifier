@@ -22,7 +22,7 @@
 			}
 		},
 		{
-			"path" : "pages/cart/cart",
+			"path" : "pages/exam/exam",
 			"style" : 
 			{
 				// "navigationBarTitleText" : ""
@@ -57,10 +57,10 @@
 			"selectedIconPath":"static/tab-icons/cate-active.png"
 		},
 		{
-			"pagePath": "pages/cart/cart",
-			"text": "暂定",
-			"iconPath":"static/tab-icons/home.png",
-			"selectedIconPath":"static/tab-icons/home-active.png"
+			"pagePath": "pages/exam/exam",
+			"text": "考试",
+			"iconPath":"static/tab-icons/exam.png",
+			"selectedIconPath":"static/tab-icons/exam-active.png"
 		},
 		{
 			"pagePath": "pages/my/my",
@@ -69,6 +69,6 @@
 			"selectedIconPath":"static/tab-icons/my-active.png"
 		}
 		]
-	}
+	},
 	"uniIdRouter": {}
 }
