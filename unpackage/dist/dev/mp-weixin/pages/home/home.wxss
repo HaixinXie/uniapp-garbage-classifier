@@ -90,3 +90,37 @@
     transform: rotate(360deg);
 }
 }
+/* 四宫格布局样式 */
+.grid-container {
+  padding: 20rpx;
+  box-sizing: border-box;
+}
+.grid-items {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.grid-item {
+  width: calc(25% - 20rpx);
+  /* 每个项占25%宽度，减去间距 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20rpx;
+  box-sizing: border-box;
+}
+.grid-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 16rpx;
+  margin-bottom: 12rpx;
+}
+.grid-text {
+  font-size: 24rpx;
+  color: #333;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
