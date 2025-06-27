@@ -1,17 +1,20 @@
 {
   "pages": [
     "pages/home/home",
+    "pages/identify/identify",
     "pages/cate/cate",
-    "pages/cart/cart",
+    "pages/exam/exam",
     "pages/my/my"
   ],
   "window": {
     "navigationBarTextStyle": "white",
     "navigationBarTitleText": "暂定",
-    "navigationBarBackgroundColor": "#389bff",
+    "navigationBarBackgroundColor": "#222222",
     "backgroundColor": "#F8F8F8"
   },
   "tabBar": {
+    "custom": true,
+    "color": "#515151",
     "selectedColor": "#389bff",
     "list": [
       {
@@ -27,10 +30,16 @@
         "selectedIconPath": "static/tab-icons/cate-active.png"
       },
       {
-        "pagePath": "pages/cart/cart",
-        "text": "暂定",
-        "iconPath": "static/tab-icons/home.png",
-        "selectedIconPath": "static/tab-icons/home-active.png"
+        "pagePath": "pages/identify/identify",
+        "text": "识别",
+        "iconPath": "static/tab-icons/identify.png",
+        "selectedIconPath": "static/tab-icons/identify.png"
+      },
+      {
+        "pagePath": "pages/exam/exam",
+        "text": "考试",
+        "iconPath": "static/tab-icons/exam.png",
+        "selectedIconPath": "static/tab-icons/exam-active.png"
       },
       {
         "pagePath": "pages/my/my",

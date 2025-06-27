@@ -1,3 +1,5 @@
 {
-  "usingComponents": {}
+  "usingComponents": {
+    "uni-mysearch": "../../node-modules/@dcloudio/uni-ui/lib/uni-mysearch/uni-mysearch"
+  }
 }

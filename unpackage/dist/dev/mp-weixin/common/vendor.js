@@ -68,8 +68,8 @@ const capitalize = cacheStringFunction((str) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 });
 const toHandlerKey = cacheStringFunction((str) => {
-  const s = str ? `on${capitalize(str)}` : ``;
-  return s;
+  const s2 = str ? `on${capitalize(str)}` : ``;
+  return s2;
 });
 const hasChanged = (value, oldValue) => !Object.is(value, oldValue);
 const invokeArrayFns$1 = (fns, arg) => {
@@ -85,9 +85,59 @@ const def = (obj, key, value) => {
   });
 };
 const looseToNumber = (val) => {
-  const n = parseFloat(val);
-  return isNaN(n) ? val : n;
+  const n2 = parseFloat(val);
+  return isNaN(n2) ? val : n2;
 };
+function normalizeStyle(value) {
+  if (isArray(value)) {
+    const res = {};
+    for (let i = 0; i < value.length; i++) {
+      const item = value[i];
+      const normalized = isString(item) ? parseStringStyle(item) : normalizeStyle(item);
+      if (normalized) {
+        for (const key in normalized) {
+          res[key] = normalized[key];
+        }
+      }
+    }
+    return res;
+  } else if (isString(value) || isObject(value)) {
+    return value;
+  }
+}
+const listDelimiterRE = /;(?![^(]*\))/g;
+const propertyDelimiterRE = /:([^]+)/;
+const styleCommentRE = /\/\*[^]*?\*\//g;
+function parseStringStyle(cssText) {
+  const ret = {};
+  cssText.replace(styleCommentRE, "").split(listDelimiterRE).forEach((item) => {
+    if (item) {
+      const tmp = item.split(propertyDelimiterRE);
+      tmp.length > 1 && (ret[tmp[0].trim()] = tmp[1].trim());
+    }
+  });
+  return ret;
+}
+function normalizeClass(value) {
+  let res = "";
+  if (isString(value)) {
+    res = value;
+  } else if (isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      const normalized = normalizeClass(value[i]);
+      if (normalized) {
+        res += normalized + " ";
+      }
+    }
+  } else if (isObject(value)) {
+    for (const name in value) {
+      if (value[name]) {
+        res += name + " ";
+      }
+    }
+  }
+  return res.trim();
+}
 const LOCALE_ZH_HANS = "zh-Hans";
 const LOCALE_ZH_HANT = "zh-Hant";
 const LOCALE_EN = "en";
@@ -323,8 +373,8 @@ const E = function() {
 E.prototype = {
   _id: 1,
   on: function(name, callback, ctx) {
-    var e = this.e || (this.e = {});
-    (e[name] || (e[name] = [])).push({
+    var e2 = this.e || (this.e = {});
+    (e2[name] || (e2[name] = [])).push({
       fn: callback,
       ctx,
       _id: this._id
@@ -351,8 +401,8 @@ E.prototype = {
     return this;
   },
   off: function(name, event) {
-    var e = this.e || (this.e = {});
-    var evts = e[name];
+    var e2 = this.e || (this.e = {});
+    var evts = e2[name];
     var liveEvents = [];
     if (evts && event) {
       for (var i = evts.length - 1; i >= 0; i--) {
@@ -363,7 +413,7 @@ E.prototype = {
       }
       liveEvents = evts;
     }
-    liveEvents.length ? e[name] = liveEvents : delete e[name];
+    liveEvents.length ? e2[name] = liveEvents : delete e2[name];
     return this;
   }
 };
@@ -1252,6 +1302,9 @@ function isReadonly(value) {
 function isShallow(value) {
   return !!(value && value["__v_isShallow"]);
 }
+function isProxy(value) {
+  return isReactive(value) || isReadonly(value);
+}
 function toRaw(observed) {
   const raw = observed && observed["__v_raw"];
   return raw ? toRaw(raw) : observed;
@@ -2042,6 +2095,47 @@ function setCurrentRenderingInstance(instance) {
   currentRenderingInstance = instance;
   instance && instance.type.__scopeId || null;
   return prev;
+}
+const COMPONENTS = "components";
+function resolveComponent(name, maybeSelfReference) {
+  return resolveAsset(COMPONENTS, name, true, maybeSelfReference) || name;
+}
+function resolveAsset(type, name, warnMissing = true, maybeSelfReference = false) {
+  const instance = currentRenderingInstance || currentInstance;
+  if (instance) {
+    const Component2 = instance.type;
+    if (type === COMPONENTS) {
+      const selfName = getComponentName(
+        Component2,
+        false
+      );
+      if (selfName && (selfName === name || selfName === camelize(name) || selfName === capitalize(camelize(name)))) {
+        return Component2;
+      }
+    }
+    const res = (
+      // local registration
+      // check instance[type] first which is resolved for options API
+      resolve(instance[type] || Component2[type], name) || // global registration
+      resolve(instance.appContext[type], name)
+    );
+    if (!res && maybeSelfReference) {
+      return Component2;
+    }
+    if (warnMissing && !res) {
+      const extra = type === COMPONENTS ? `
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement.` : ``;
+      warn$1(`Failed to resolve ${type.slice(0, -1)}: ${name}${extra}`);
+    }
+    return res;
+  } else {
+    warn$1(
+      `resolve${capitalize(type.slice(0, -1))} can only be used in render() or setup().`
+    );
+  }
+}
+function resolve(registry, name) {
+  return registry && (registry[name] || registry[camelize(name)] || registry[capitalize(camelize(name))]);
 }
 const INITIAL_WATCHER_VALUE = {};
 function watch(source, cb, options) {
@@ -3653,6 +3747,12 @@ const Static = Symbol.for("v-stc");
 function isVNode(value) {
   return value ? value.__v_isVNode === true : false;
 }
+const InternalObjectKey = `__vInternal`;
+function guardReactiveProps(props) {
+  if (!props)
+    return null;
+  return isProxy(props) || InternalObjectKey in props ? extend({}, props) : props;
+}
 const emptyAppContext = createAppContext();
 let uid = 0;
 function createComponentInstance(vnode, parent, suspense) {
@@ -4891,6 +4991,11 @@ function initApp(app) {
   }
 }
 const propsCaches = /* @__PURE__ */ Object.create(null);
+function renderProps(props) {
+  const { uid: uid2, __counter } = getCurrentInstance();
+  const propsId = (propsCaches[uid2] || (propsCaches[uid2] = [])).push(guardReactiveProps(props)) - 1;
+  return uid2 + "," + propsId + "," + __counter;
+}
 function pruneComponentPropsCache(uid2) {
   delete propsCaches[uid2];
 }
@@ -4931,6 +5036,154 @@ function getCreateApp() {
     return my[method];
   }
 }
+function stringifyStyle(value) {
+  if (isString(value)) {
+    return value;
+  }
+  return stringify(normalizeStyle(value));
+}
+function stringify(styles) {
+  let ret = "";
+  if (!styles || isString(styles)) {
+    return ret;
+  }
+  for (const key in styles) {
+    ret += `${key.startsWith(`--`) ? key : hyphenate(key)}:${styles[key]};`;
+  }
+  return ret;
+}
+function vOn(value, key) {
+  const instance = getCurrentInstance();
+  const ctx = instance.ctx;
+  const extraKey = typeof key !== "undefined" && (ctx.$mpPlatform === "mp-weixin" || ctx.$mpPlatform === "mp-qq" || ctx.$mpPlatform === "mp-xhs") && (isString(key) || typeof key === "number") ? "_" + key : "";
+  const name = "e" + instance.$ei++ + extraKey;
+  const mpInstance = ctx.$scope;
+  if (!value) {
+    delete mpInstance[name];
+    return name;
+  }
+  const existingInvoker = mpInstance[name];
+  if (existingInvoker) {
+    existingInvoker.value = value;
+  } else {
+    mpInstance[name] = createInvoker(value, instance);
+  }
+  return name;
+}
+function createInvoker(initialValue, instance) {
+  const invoker = (e2) => {
+    patchMPEvent(e2);
+    let args = [e2];
+    if (instance && instance.ctx.$getTriggerEventDetail) {
+      if (typeof e2.detail === "number") {
+        e2.detail = instance.ctx.$getTriggerEventDetail(e2.detail);
+      }
+    }
+    if (e2.detail && e2.detail.__args__) {
+      args = e2.detail.__args__;
+    }
+    const eventValue = invoker.value;
+    const invoke = () => callWithAsyncErrorHandling(patchStopImmediatePropagation(e2, eventValue), instance, 5, args);
+    const eventTarget = e2.target;
+    const eventSync = eventTarget ? eventTarget.dataset ? String(eventTarget.dataset.eventsync) === "true" : false : false;
+    if (bubbles.includes(e2.type) && !eventSync) {
+      setTimeout(invoke);
+    } else {
+      const res = invoke();
+      if (e2.type === "input" && (isArray(res) || isPromise(res))) {
+        return;
+      }
+      return res;
+    }
+  };
+  invoker.value = initialValue;
+  return invoker;
+}
+const bubbles = [
+  // touch事件暂不做延迟，否则在 Android 上会影响性能，比如一些拖拽跟手手势等
+  // 'touchstart',
+  // 'touchmove',
+  // 'touchcancel',
+  // 'touchend',
+  "tap",
+  "longpress",
+  "longtap",
+  "transitionend",
+  "animationstart",
+  "animationiteration",
+  "animationend",
+  "touchforcechange"
+];
+function patchMPEvent(event, instance) {
+  if (event.type && event.target) {
+    event.preventDefault = NOOP;
+    event.stopPropagation = NOOP;
+    event.stopImmediatePropagation = NOOP;
+    if (!hasOwn(event, "detail")) {
+      event.detail = {};
+    }
+    if (hasOwn(event, "markerId")) {
+      event.detail = typeof event.detail === "object" ? event.detail : {};
+      event.detail.markerId = event.markerId;
+    }
+    if (isPlainObject(event.detail) && hasOwn(event.detail, "checked") && !hasOwn(event.detail, "value")) {
+      event.detail.value = event.detail.checked;
+    }
+    if (isPlainObject(event.detail)) {
+      event.target = extend({}, event.target, event.detail);
+    }
+  }
+}
+function patchStopImmediatePropagation(e2, value) {
+  if (isArray(value)) {
+    const originalStop = e2.stopImmediatePropagation;
+    e2.stopImmediatePropagation = () => {
+      originalStop && originalStop.call(e2);
+      e2._stopped = true;
+    };
+    return value.map((fn) => (e3) => !e3._stopped && fn(e3));
+  } else {
+    return value;
+  }
+}
+function vFor(source, renderItem) {
+  let ret;
+  if (isArray(source) || isString(source)) {
+    ret = new Array(source.length);
+    for (let i = 0, l = source.length; i < l; i++) {
+      ret[i] = renderItem(source[i], i, i);
+    }
+  } else if (typeof source === "number") {
+    if (!Number.isInteger(source)) {
+      warn(`The v-for range expect an integer value but got ${source}.`);
+      return [];
+    }
+    ret = new Array(source);
+    for (let i = 0; i < source; i++) {
+      ret[i] = renderItem(i + 1, i, i);
+    }
+  } else if (isObject(source)) {
+    if (source[Symbol.iterator]) {
+      ret = Array.from(source, (item, i) => renderItem(item, i, i));
+    } else {
+      const keys = Object.keys(source);
+      ret = new Array(keys.length);
+      for (let i = 0, l = keys.length; i < l; i++) {
+        const key = keys[i];
+        ret[i] = renderItem(source[key], key, i);
+      }
+    }
+  } else {
+    ret = [];
+  }
+  return ret;
+}
+const o = (value, key) => vOn(value, key);
+const f = (source, renderItem) => vFor(source, renderItem);
+const s = (value) => stringifyStyle(value);
+const e = (target, ...sources) => extend(target, ...sources);
+const n = (value) => normalizeClass(value);
+const p = (props) => renderProps(props);
 function createApp$1(rootComponent, rootProps = null) {
   rootComponent && (rootComponent.mpType = "app");
   return createVueApp(rootComponent, rootProps).use(plugin);
@@ -5069,8 +5322,8 @@ function tryCatch(fn) {
   return function() {
     try {
       return fn.apply(fn, arguments);
-    } catch (e) {
-      console.error(e);
+    } catch (e2) {
+      console.error(e2);
     }
   };
 }
@@ -5252,8 +5505,8 @@ function promisify$1(name, fn) {
     if (hasCallback(args)) {
       return wrapperReturnValue(name, invokeApi(name, fn, args, rest));
     }
-    return wrapperReturnValue(name, handlePromise(new Promise((resolve, reject) => {
-      invokeApi(name, fn, extend(args, { success: resolve, fail: reject }), rest);
+    return wrapperReturnValue(name, handlePromise(new Promise((resolve2, reject) => {
+      invokeApi(name, fn, extend(args, { success: resolve2, fail: reject }), rest);
     })));
   };
 }
@@ -5521,8 +5774,8 @@ const $once = defineSyncApi(API_ONCE, (name, callback) => {
 const $off = defineSyncApi(API_OFF, (name, callback) => {
   if (!isArray(name))
     name = name ? [name] : [];
-  name.forEach((n) => {
-    eventBus.off(n, callback);
+  name.forEach((n2) => {
+    eventBus.off(n2, callback);
   });
 }, OffProtocol);
 const $emit = defineSyncApi(API_EMIT, (name, ...args) => {
@@ -5534,7 +5787,7 @@ let enabled;
 function normalizePushMessage(message) {
   try {
     return JSON.parse(message);
-  } catch (e) {
+  } catch (e2) {
   }
   return message;
 }
@@ -5574,7 +5827,7 @@ function invokeGetPushCidCallbacks(cid2, errMsg) {
   getPushCidCallbacks.length = 0;
 }
 const API_GET_PUSH_CLIENT_ID = "getPushClientId";
-const getPushClientId = defineAsyncApi(API_GET_PUSH_CLIENT_ID, (_, { resolve, reject }) => {
+const getPushClientId = defineAsyncApi(API_GET_PUSH_CLIENT_ID, (_, { resolve: resolve2, reject }) => {
   Promise.resolve().then(() => {
     if (typeof enabled === "undefined") {
       enabled = false;
@@ -5583,7 +5836,7 @@ const getPushClientId = defineAsyncApi(API_GET_PUSH_CLIENT_ID, (_, { resolve, re
     }
     getPushCidCallbacks.push((cid2, errMsg) => {
       if (cid2) {
-        resolve({ cid: cid2 });
+        resolve2({ cid: cid2 });
       } else {
         reject(errMsg);
       }
@@ -5652,9 +5905,9 @@ function promisify(name, api) {
     if (isFunction(options.success) || isFunction(options.fail) || isFunction(options.complete)) {
       return wrapperReturnValue(name, invokeApi(name, api, options, rest));
     }
-    return wrapperReturnValue(name, handlePromise(new Promise((resolve, reject) => {
+    return wrapperReturnValue(name, handlePromise(new Promise((resolve2, reject) => {
       invokeApi(name, api, extend({}, options, {
-        success: resolve,
+        success: resolve2,
         fail: reject
       }), rest);
     })));
@@ -6261,13 +6514,13 @@ function initRuntimeSocket(hosts, port, id) {
 }
 const SOCKET_TIMEOUT = 500;
 function tryConnectSocket(host2, port, id) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     const socket = index.connectSocket({
       url: `ws://${host2}:${port}/${id}`,
       multiple: true,
       // 支付宝小程序 是否开启多实例
       fail() {
-        resolve(null);
+        resolve2(null);
       }
     });
     const timer = setTimeout(() => {
@@ -6275,19 +6528,19 @@ function tryConnectSocket(host2, port, id) {
         code: 1006,
         reason: "connect timeout"
       });
-      resolve(null);
+      resolve2(null);
     }, SOCKET_TIMEOUT);
-    socket.onOpen((e) => {
+    socket.onOpen((e2) => {
       clearTimeout(timer);
-      resolve(socket);
+      resolve2(socket);
     });
-    socket.onClose((e) => {
+    socket.onClose((e2) => {
       clearTimeout(timer);
-      resolve(null);
+      resolve2(null);
     });
-    socket.onError((e) => {
+    socket.onError((e2) => {
       clearTimeout(timer);
-      resolve(null);
+      resolve2(null);
     });
   });
 }
@@ -6382,7 +6635,7 @@ function formatMessage(type, args) {
       type,
       args: formatArgs(args)
     };
-  } catch (e) {
+  } catch (e2) {
   }
   return {
     type,
@@ -6410,7 +6663,7 @@ function formatArg(arg, depth = 0) {
     case "object":
       try {
         return formatObject(arg, depth);
-      } catch (e) {
+      } catch (e2) {
         return {
           type: "object",
           value: {
@@ -6750,9 +7003,9 @@ function isConsoleWritable() {
   return isWritable;
 }
 function initRuntimeSocketService() {
-  const hosts = "192.168.108.1,192.168.232.1,10.72.25.229,127.0.0.1";
+  const hosts = "192.168.108.1,192.168.232.1,127.0.0.1";
   const port = "8090";
-  const id = "mp-weixin_yecHl8";
+  const id = "mp-weixin_wUkdlY";
   const lazy = typeof swan !== "undefined";
   let restoreError = lazy ? () => {
   } : initOnError();
@@ -7698,7 +7951,661 @@ const createSubpackageApp = initCreateSubpackageApp();
   wx.createPluginApp = global.createPluginApp = createPluginApp;
   wx.createSubpackageApp = global.createSubpackageApp = createSubpackageApp;
 }
+const fontData = [
+  {
+    "font_class": "arrow-down",
+    "unicode": ""
+  },
+  {
+    "font_class": "arrow-left",
+    "unicode": ""
+  },
+  {
+    "font_class": "arrow-right",
+    "unicode": ""
+  },
+  {
+    "font_class": "arrow-up",
+    "unicode": ""
+  },
+  {
+    "font_class": "auth",
+    "unicode": ""
+  },
+  {
+    "font_class": "auth-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "back",
+    "unicode": ""
+  },
+  {
+    "font_class": "bars",
+    "unicode": ""
+  },
+  {
+    "font_class": "calendar",
+    "unicode": ""
+  },
+  {
+    "font_class": "calendar-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "camera",
+    "unicode": ""
+  },
+  {
+    "font_class": "camera-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "cart",
+    "unicode": ""
+  },
+  {
+    "font_class": "cart-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "chat",
+    "unicode": ""
+  },
+  {
+    "font_class": "chat-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "chatboxes",
+    "unicode": ""
+  },
+  {
+    "font_class": "chatboxes-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "chatbubble",
+    "unicode": ""
+  },
+  {
+    "font_class": "chatbubble-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "checkbox",
+    "unicode": ""
+  },
+  {
+    "font_class": "checkbox-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "checkmarkempty",
+    "unicode": ""
+  },
+  {
+    "font_class": "circle",
+    "unicode": ""
+  },
+  {
+    "font_class": "circle-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "clear",
+    "unicode": ""
+  },
+  {
+    "font_class": "close",
+    "unicode": ""
+  },
+  {
+    "font_class": "closeempty",
+    "unicode": ""
+  },
+  {
+    "font_class": "cloud-download",
+    "unicode": ""
+  },
+  {
+    "font_class": "cloud-download-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "cloud-upload",
+    "unicode": ""
+  },
+  {
+    "font_class": "cloud-upload-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "color",
+    "unicode": ""
+  },
+  {
+    "font_class": "color-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "compose",
+    "unicode": ""
+  },
+  {
+    "font_class": "contact",
+    "unicode": ""
+  },
+  {
+    "font_class": "contact-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "down",
+    "unicode": ""
+  },
+  {
+    "font_class": "bottom",
+    "unicode": ""
+  },
+  {
+    "font_class": "download",
+    "unicode": ""
+  },
+  {
+    "font_class": "download-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "email",
+    "unicode": ""
+  },
+  {
+    "font_class": "email-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "eye",
+    "unicode": ""
+  },
+  {
+    "font_class": "eye-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "eye-slash",
+    "unicode": ""
+  },
+  {
+    "font_class": "eye-slash-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "fire",
+    "unicode": ""
+  },
+  {
+    "font_class": "fire-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "flag",
+    "unicode": ""
+  },
+  {
+    "font_class": "flag-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "folder-add",
+    "unicode": ""
+  },
+  {
+    "font_class": "folder-add-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "font",
+    "unicode": ""
+  },
+  {
+    "font_class": "forward",
+    "unicode": ""
+  },
+  {
+    "font_class": "gear",
+    "unicode": ""
+  },
+  {
+    "font_class": "gear-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "gift",
+    "unicode": ""
+  },
+  {
+    "font_class": "gift-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "hand-down",
+    "unicode": ""
+  },
+  {
+    "font_class": "hand-down-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "hand-up",
+    "unicode": ""
+  },
+  {
+    "font_class": "hand-up-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "headphones",
+    "unicode": ""
+  },
+  {
+    "font_class": "heart",
+    "unicode": ""
+  },
+  {
+    "font_class": "heart-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "help",
+    "unicode": ""
+  },
+  {
+    "font_class": "help-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "home",
+    "unicode": ""
+  },
+  {
+    "font_class": "home-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "image",
+    "unicode": ""
+  },
+  {
+    "font_class": "image-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "images",
+    "unicode": ""
+  },
+  {
+    "font_class": "images-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "info",
+    "unicode": ""
+  },
+  {
+    "font_class": "info-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "left",
+    "unicode": ""
+  },
+  {
+    "font_class": "link",
+    "unicode": ""
+  },
+  {
+    "font_class": "list",
+    "unicode": ""
+  },
+  {
+    "font_class": "location",
+    "unicode": ""
+  },
+  {
+    "font_class": "location-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "locked",
+    "unicode": ""
+  },
+  {
+    "font_class": "locked-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "loop",
+    "unicode": ""
+  },
+  {
+    "font_class": "mail-open",
+    "unicode": ""
+  },
+  {
+    "font_class": "mail-open-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "map",
+    "unicode": ""
+  },
+  {
+    "font_class": "map-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "map-pin",
+    "unicode": ""
+  },
+  {
+    "font_class": "map-pin-ellipse",
+    "unicode": ""
+  },
+  {
+    "font_class": "medal",
+    "unicode": ""
+  },
+  {
+    "font_class": "medal-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "mic",
+    "unicode": ""
+  },
+  {
+    "font_class": "mic-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "micoff",
+    "unicode": ""
+  },
+  {
+    "font_class": "micoff-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "minus",
+    "unicode": ""
+  },
+  {
+    "font_class": "minus-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "more",
+    "unicode": ""
+  },
+  {
+    "font_class": "more-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "navigate",
+    "unicode": ""
+  },
+  {
+    "font_class": "navigate-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "notification",
+    "unicode": ""
+  },
+  {
+    "font_class": "notification-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "paperclip",
+    "unicode": ""
+  },
+  {
+    "font_class": "paperplane",
+    "unicode": ""
+  },
+  {
+    "font_class": "paperplane-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "person",
+    "unicode": ""
+  },
+  {
+    "font_class": "person-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "personadd",
+    "unicode": ""
+  },
+  {
+    "font_class": "personadd-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "personadd-filled-copy",
+    "unicode": ""
+  },
+  {
+    "font_class": "phone",
+    "unicode": ""
+  },
+  {
+    "font_class": "phone-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "plus",
+    "unicode": ""
+  },
+  {
+    "font_class": "plus-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "plusempty",
+    "unicode": ""
+  },
+  {
+    "font_class": "pulldown",
+    "unicode": ""
+  },
+  {
+    "font_class": "pyq",
+    "unicode": ""
+  },
+  {
+    "font_class": "qq",
+    "unicode": ""
+  },
+  {
+    "font_class": "redo",
+    "unicode": ""
+  },
+  {
+    "font_class": "redo-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "refresh",
+    "unicode": ""
+  },
+  {
+    "font_class": "refresh-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "refreshempty",
+    "unicode": ""
+  },
+  {
+    "font_class": "reload",
+    "unicode": ""
+  },
+  {
+    "font_class": "right",
+    "unicode": ""
+  },
+  {
+    "font_class": "scan",
+    "unicode": ""
+  },
+  {
+    "font_class": "search",
+    "unicode": ""
+  },
+  {
+    "font_class": "settings",
+    "unicode": ""
+  },
+  {
+    "font_class": "settings-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "shop",
+    "unicode": ""
+  },
+  {
+    "font_class": "shop-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "smallcircle",
+    "unicode": ""
+  },
+  {
+    "font_class": "smallcircle-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "sound",
+    "unicode": ""
+  },
+  {
+    "font_class": "sound-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "spinner-cycle",
+    "unicode": ""
+  },
+  {
+    "font_class": "staff",
+    "unicode": ""
+  },
+  {
+    "font_class": "staff-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "star",
+    "unicode": ""
+  },
+  {
+    "font_class": "star-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "starhalf",
+    "unicode": ""
+  },
+  {
+    "font_class": "trash",
+    "unicode": ""
+  },
+  {
+    "font_class": "trash-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "tune",
+    "unicode": ""
+  },
+  {
+    "font_class": "tune-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "undo",
+    "unicode": ""
+  },
+  {
+    "font_class": "undo-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "up",
+    "unicode": ""
+  },
+  {
+    "font_class": "top",
+    "unicode": ""
+  },
+  {
+    "font_class": "upload",
+    "unicode": ""
+  },
+  {
+    "font_class": "upload-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "videocam",
+    "unicode": ""
+  },
+  {
+    "font_class": "videocam-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "vip",
+    "unicode": ""
+  },
+  {
+    "font_class": "vip-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "wallet",
+    "unicode": ""
+  },
+  {
+    "font_class": "wallet-filled",
+    "unicode": ""
+  },
+  {
+    "font_class": "weibo",
+    "unicode": ""
+  },
+  {
+    "font_class": "weixin",
+    "unicode": ""
+  }
+];
 exports._export_sfc = _export_sfc;
 exports.createSSRApp = createSSRApp;
+exports.e = e;
+exports.f = f;
+exports.fontData = fontData;
 exports.index = index;
+exports.n = n;
+exports.o = o;
+exports.p = p;
+exports.resolveComponent = resolveComponent;
+exports.s = s;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/common/vendor.js.map

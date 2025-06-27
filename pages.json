@@ -15,6 +15,13 @@
 			}
 		},
 		{
+			"path": "pages/identify/identify",
+			"style":
+			{
+				
+			}
+		},
+		{
 			"path" : "pages/cate/cate",
 			"style" : 
 			{
@@ -39,36 +46,44 @@
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
 		"navigationBarTitleText": "暂定",
-		"navigationBarBackgroundColor": "#389bff",
+		"navigationBarBackgroundColor": "#222222",
 		"backgroundColor": "#F8F8F8"
 	},
 	"tabBar": {
-		"selectedColor": "#389bff",
-		"list": [{
-			"pagePath": "pages/home/home",
-			"text": "首页",
-			"iconPath":"static/tab-icons/home.png",
-			"selectedIconPath":"static/tab-icons/home-active.png"
+			"custom": true,
+			"color": "#515151",
+			"selectedColor": "#389bff",
+			"list": [{
+				"pagePath": "pages/home/home",
+				"text": "首页",
+				"iconPath":"static/tab-icons/home.png",
+				"selectedIconPath":"static/tab-icons/home-active.png"
+			},
+			{
+				"pagePath": "pages/cate/cate",
+				"text": "分类",
+				"iconPath":"static/tab-icons/cate.png",
+				"selectedIconPath":"static/tab-icons/cate-active.png"
+			},
+			{
+				"pagePath": "pages/identify/identify",
+				"text": "识别",
+				"iconPath":"static/tab-icons/identify.png",
+				"selectedIconPath":"static/tab-icons/identify.png"
+			},
+			{
+				"pagePath": "pages/exam/exam",
+				"text": "考试",
+				"iconPath":"static/tab-icons/exam.png",
+				"selectedIconPath":"static/tab-icons/exam-active.png"
+			},
+			{
+				"pagePath": "pages/my/my",
+				"text": "我的",
+				"iconPath":"static/tab-icons/my.png",
+				"selectedIconPath":"static/tab-icons/my-active.png"
+			}
+			]
 		},
-		{
-			"pagePath": "pages/cate/cate",
-			"text": "分类",
-			"iconPath":"static/tab-icons/cate.png",
-			"selectedIconPath":"static/tab-icons/cate-active.png"
-		},
-		{
-			"pagePath": "pages/exam/exam",
-			"text": "考试",
-			"iconPath":"static/tab-icons/exam.png",
-			"selectedIconPath":"static/tab-icons/exam-active.png"
-		},
-		{
-			"pagePath": "pages/my/my",
-			"text": "我的",
-			"iconPath":"static/tab-icons/my.png",
-			"selectedIconPath":"static/tab-icons/my-active.png"
-		}
-		]
-	},
 	"uniIdRouter": {}
 }
