@@ -6,9 +6,30 @@
     "pages/exam/exam",
     "pages/my/my"
   ],
+  "subPackages": [
+    {
+      "root": "subpkg",
+      "pages": [
+        "exam/exam",
+        "leaderboard/leaderboard",
+        "result/result",
+        "chooseAvatarAndNickname/chooseAvatarAndNickname",
+        "identify/identify",
+        "study/study",
+        "guide/guide",
+        "points/points",
+        "recognitionRecord/recognitionRecord",
+        "examRecords/examRecords",
+        "bindSchoolClass/bindSchoolClass",
+        "ecoLearn/ecoLearn",
+        "recycleGuide/recycleGuide",
+        "kitchenWasteTips/kitchenWasteTips"
+      ]
+    }
+  ],
   "window": {
     "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "暂定",
+    "navigationBarTitleText": "垃圾分类小助手",
     "navigationBarBackgroundColor": "#222222",
     "backgroundColor": "#F8F8F8"
   },

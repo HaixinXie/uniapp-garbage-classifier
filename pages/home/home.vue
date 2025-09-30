@@ -35,7 +35,7 @@
 	    <uni-mysearch 
 	      placeholder="请输入要查询的垃圾"
 	      iconColor="#3370FF"
-	      :rightIcons="[{ type: 'mic-filled' }, { type: 'camera-filled' }]"
+	      :rightIcons="[{ type: 'camera-filled' }]"  
 	      @input="handleInput"
 	      @confirm="handleConfirm"
 	      @focus="handleFocus"
@@ -43,7 +43,7 @@
 	      @clear="handleClear"
 	      @iconClick="handleIconClick"
 	      @rightIconClick="handleRightIconClick"
-	    ></uni-mysearch>
+	    />
 	    
 	    <!-- 搜索结果展示区域 -->
 	    <view v-if="searchResult" class="result-container">
@@ -58,7 +58,7 @@
 	          v-for="(item, index) in gridData" 
 	          :key="index" 
 	          class="grid-item"
-	          @click="goToDetail(item.url)"
+	          @click="goToDetail(item.url, index)"
 	        >
 	          <image 
 	            :src="item.image" 
@@ -69,11 +69,32 @@
 	        </view>
 	      </view>
 	    </view>
+		
+		<view class="hot-knowledge-section">
+		  <view class="section-title">热门知识</view>
+		  <view class="card-container">
+		    <view 
+		      v-for="(item, index) in hotKnowledge" 
+		      :key="index" 
+		      class="knowledge-card" 
+		      @click="goToKnowledge(item)"
+		    >
+		      <image :src="item.image" class="card-image" />
+		      <view class="card-content">
+		        <text class="card-title">{{ item.title }}</text>
+		        <text class="card-desc">{{ item.desc }}</text>
+		      </view>
+		    </view>
+		  </view>
+		</view>
+
   </view>
 </template>
 
 <script>
-	
+
+const app = getApp()
+
 export default {
   data() {
     return {
@@ -91,27 +112,43 @@ export default {
 			id: 1,
 			title: '环保知识学习',
 			image: '/static/home/grid-container/study.svg',
-			url: '/pages/category/detail?id=1'
+			url: '/subpkg/ecoLearn/ecoLearn'
 		  },
 		  {
 			id: 2,
-			title: '竞答得积分',
+			title: '考试得积分',
 			image: '/static/home/grid-container/question.svg',
-			url: '/pages/category/detail?id=2'
+			url: '/pages/exam/exam'
 		  },
 		  {
 			id: 3,
 			title: '投放指南',
 			image: '/static/home/grid-container/guide.svg',
-			url: '/pages/category/detail?id=3'
+			url: '/subpkg/guide/guide'
 		  },
 		  {
 			id: 4,
 			title: '全部分类',
 			image: '/static/home/grid-container/cate.svg',
-			url: '/pages/category/detail?id=4'
+			url: '/pages/cate/cate'
 		  }
-		]
+		],
+		hotKnowledge: [
+			{
+			  id: 1,
+			  title: '如何正确投放可回收物',
+			  desc: '纸张、塑料、金属等可回收物应分类投放，保持干净整洁。',
+			  image: '/static/home/hotKnowledge/hotKnowledge01.jpg',
+			  url: '/subpkg/recycleGuide/recycleGuide'
+			},
+			{
+			  id: 2,
+			  title: '厨余垃圾处理小技巧',
+			  desc: '厨余垃圾应去除包装袋，尽量沥干水分投放。',
+			  image: '/static/home/hotKnowledge/hotKnowledge02.jpg',
+			  url: '/subpkg/kitchenWasteTips/kitchenWasteTips'
+			}
+		  ]
     }
   },
   methods: {
@@ -120,11 +157,23 @@ export default {
       this.$set(this.imageLoadStates, index, true);
     },
 	// 跳转到详情页
-	goToDetail(url) {
+	goToDetail(url, index) {
 	  if (url) {
-		uni.navigateTo({
-		  url: url
-		});
+		if(index == 1) {
+			app.globalData.selected = 3;
+			uni.switchTab({
+				url: url
+			});
+		}else if(index == 3) {
+			app.globalData.selected = 1;
+			uni.switchTab({
+				url: url
+			});
+		} else {
+			uni.navigateTo({
+			  url: url
+			});
+		}
 	  } else {
 		uni.showToast({
 		  title: '暂无跳转链接',
@@ -145,16 +194,19 @@ export default {
 	
 	// 确认搜索事件处理
 	handleConfirm(value) {
-	  if (!value.trim()) {
-		uni.showToast({
-		  title: '请输入要查询的垃圾',
-		  icon: 'none'
-		});
-		return;
-	  }
-	  
-	  this.searchValue = value;
-	  this.queryGarbageType(value);
+	  const keyword = value.trim();
+	    if (!keyword) {
+	      uni.showToast({
+	        title: '请输入要查询的垃圾',
+	        icon: 'none'
+	      });
+	      return;
+	    }
+	    
+	    // 跳转到识别页面，type=0表示文字检索
+	    uni.navigateTo({
+	      url: `/subpkg/identify/identify?type=0&searchWord=${keyword}`
+	    });
 	},
 	
 	// 聚焦事件处理
@@ -177,31 +229,24 @@ export default {
 	
 	// 左侧图标点击事件处理
 	handleIconClick() {
-	  console.log('左侧图标点击');
-	  // 左侧默认是搜索图标，点击可以触发搜索
-	  if (this.searchValue.trim()) {
-		this.queryGarbageType(this.searchValue);
-	  } else {
-		uni.showToast({
-		  title: '请输入要查询的垃圾',
-		  icon: 'none'
-		});
+	  const keyword = this.searchValue.trim();
+	  if (!keyword) {
+	    uni.showToast({
+	      title: '请输入要查询的垃圾',
+	      icon: 'none'
+	    });
+	    return;
 	  }
+	
+	  // 跳转到文字识别页面，type=0表示文字搜索
+	  uni.navigateTo({
+	    url: `/subpkg/identify/identify?type=0&searchWord=${keyword}`
+	  });
 	},
 	
 	// 右侧图标点击事件处理
 	handleRightIconClick(index) {
-	  const iconTypes = ['语音识别', '拍照识别'];
-	  console.log(`点击右侧图标: ${iconTypes[index]}`);
-	  
-	  // 根据点击的图标索引执行不同操作
-	  if (index === 0) {
-		// 语音识别功能
-		this.startVoiceRecognition();
-	  } else if (index === 1) {
-		// 拍照识别功能
-		this.startCameraRecognition();
-	  }
+	  this.startCameraRecognition();
 	},
 	
 	// 实时搜索功能
@@ -234,28 +279,29 @@ export default {
 	  }, 800);
 	},
 	
-	// 语音识别功能
-	startVoiceRecognition() {
-	  uni.showToast({
-		title: '语音识别功能',
-		icon: 'none'
-	  });
-	  // 这里应调用语音识别API
-	},
 	
 	// 拍照识别功能
 	startCameraRecognition() {
 	  uni.chooseImage({
 		count: 1,
-		sizeType: ['compressed'],
-		sourceType: ['camera'],
 		success: (res) => {
-		  uni.showToast({
-			title: '正在识别图片...',
-			icon: 'none'
+		  const tempFilePath = res.tempFilePaths[0];
+		  uni.navigateTo({
+		  			url: `/subpkg/identify/identify?type=1&tempFilePath=${tempFilePath}`
 		  });
-		  // 这里应调用图像识别API处理选中的图片
-		}
+		},
+		fail: (err) => {
+			console.error('选择图片失败：', err);
+			uni.showToast({
+			  title: '选择图片失败',
+			  icon: 'none'
+			});
+		  }
+	  });
+	},
+	goToKnowledge(item) {
+	  uni.navigateTo({
+		url: item.url
 	  });
 	}
   }
@@ -377,5 +423,53 @@ export default {
   text-overflow: ellipsis;
   width: 100%;
 }
+
+.hot-knowledge-section {
+  margin-top: 40rpx;
+  padding: 0 20rpx;
+
+  .section-title {
+    font-size: 32rpx;
+    font-weight: bold;
+    margin-bottom: 20rpx;
+  }
+
+  .card-container {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .knowledge-card {
+    width: 48%; // 两张卡片左右排列
+    background-color: #fff;
+    border-radius: 16rpx;
+    overflow: hidden;
+    box-shadow: 0 4rpx 8rpx rgba(0,0,0,0.05);
+  }
+
+  .card-image {
+    width: 100%;
+    height: 150rpx;
+    object-fit: cover;
+  }
+
+  .card-content {
+    padding: 16rpx;
+  }
+
+  .card-title {
+    font-size: 28rpx;
+    font-weight: 600;
+    margin-bottom: 10rpx;
+  }
+
+  .card-desc {
+	display: block;
+    font-size: 24rpx;
+    color: #666;
+    line-height: 32rpx;
+  }
+}
+
 
 </style>

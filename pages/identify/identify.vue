@@ -1,6 +1,6 @@
 <template>
 	<view>
-		识别
+		
 	</view>
 </template>
 
@@ -8,11 +8,13 @@
 	export default {
 		data() {
 			return {
-				
+				src: ""
 			}
 		},
 		methods: {
-			
+			takePhoto() {
+				
+			}
 		}
 	}
 </script>

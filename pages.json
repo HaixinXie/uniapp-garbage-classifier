@@ -43,9 +43,113 @@
 			}
 		}
 	],
+	"subPackages": [
+		{
+			"root": "subpkg",
+			"pages": [{
+				"path" : "exam/exam",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "leaderboard/leaderboard",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "result/result",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "chooseAvatarAndNickname/chooseAvatarAndNickname",
+				"style" : 
+				{
+				}
+			},
+			{
+				"path" : "identify/identify",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "study/study",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "guide/guide",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "points/points",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "recognitionRecord/recognitionRecord",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "examRecords/examRecords",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "bindSchoolClass/bindSchoolClass",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "ecoLearn/ecoLearn",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "recycleGuide/recycleGuide",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			},
+			{
+				"path" : "kitchenWasteTips/kitchenWasteTips",
+				"style" : 
+				{
+					// "navigationBarTitleText" : ""
+				}
+			}
+				
+			]
+		}
+	],
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
-		"navigationBarTitleText": "暂定",
+		"navigationBarTitleText": "垃圾分类小助手",
 		"navigationBarBackgroundColor": "#222222",
 		"backgroundColor": "#F8F8F8"
 	},
